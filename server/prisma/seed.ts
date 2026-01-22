@@ -19,7 +19,7 @@ async function deleteAllData(orderedFileNames: string[]) {
       }
     } else {
       console.warn(
-        `Model ${modelName} not found. Check your Prisma schema or file naming.`
+        `Model ${modelName} not found. Check your Prisma schema or file naming.`,
       );
     }
   }
@@ -48,14 +48,16 @@ async function seedModelFromFile(filePath: string) {
       skipDuplicates: true, // prevents errors if unique constraints exist
     });
 
-    console.log(`Seeded ${modelName} with ${jsonData.length} records from ${fileName}`);
+    console.log(
+      `Seeded ${modelName} with ${jsonData.length} records from ${fileName}`,
+    );
   } catch (err) {
     console.error(`Failed to seed ${modelName} from ${fileName}:`, err);
   }
 }
 
 async function main() {
-  const dataDirectory = path.resolve(__dirname, "seedData");
+  const dataDirectory = path.join(process.cwd(), "prisma", "seedData");
 
   const orderedFileNames = [
     "products.json",
@@ -68,6 +70,8 @@ async function main() {
     "expenses.json",
     "expenseByCategory.json",
   ];
+
+  console.log("Looking for seed files in:", dataDirectory);
 
   // 1️⃣ Clear all tables
   await deleteAllData(orderedFileNames);
