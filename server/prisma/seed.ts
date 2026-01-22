@@ -2,6 +2,9 @@ import fs from "fs";
 import path from "path";
 import { prisma } from "../lib/prisma";
 
+/**
+ * Delete all data in the tables in order
+ */
 async function deleteAllData(orderedFileNames: string[]) {
   const modelNames = orderedFileNames.map((fileName) => {
     const modelName = path.basename(fileName, path.extname(fileName));
@@ -12,26 +15,24 @@ async function deleteAllData(orderedFileNames: string[]) {
     const model: any = prisma[modelName as keyof typeof prisma];
     if (model) {
       try {
-        await model.deleteMany({ where: {} }); // RDS-safe
+        await model.deleteMany({ where: {} });
         console.log(`Cleared data from ${modelName}`);
       } catch (err) {
         console.error(`Failed to clear data from ${modelName}:`, err);
       }
-    } else {
-      console.warn(
-        `Model ${modelName} not found. Check your Prisma schema or file naming.`,
-      );
     }
   }
 }
 
-async function seedModelFromFile(filePath: string) {
-  const fileName = path.basename(filePath);
-  const modelName = path.basename(fileName, path.extname(fileName));
+/**
+ * Seed a model from a JSON file
+ * Special handling for ExpenseByCategory to map expenseSummaryId
+ */
+async function seedModelFromFile(filePath: string, modelName: string) {
   const model: any = prisma[modelName as keyof typeof prisma];
 
   if (!model) {
-    console.warn(`No Prisma model matches the file name: ${fileName}`);
+    console.warn(`No Prisma model matches the file name: ${filePath}`);
     return;
   }
 
@@ -42,17 +43,43 @@ async function seedModelFromFile(filePath: string) {
       return;
     }
 
-    // Batch insert for performance
+    let dataToInsert = jsonData;
+
+    // Map expenseSummaryId for ExpenseByCategory dynamically
+    if (modelName === "ExpenseByCategory") {
+      const summaries = await prisma.expenseSummary.findMany();
+      if (!summaries.length) {
+        throw new Error(
+          "No ExpenseSummary records found. Seed ExpenseSummary before ExpenseByCategory."
+        );
+      }
+
+      dataToInsert = jsonData.map((item, index) => {
+        const summary = summaries[index % summaries.length];
+        if (!summary) {
+          throw new Error(`Summary not found at index ${index % summaries.length}`);
+        }
+        return {
+          category: item.category,
+          amount: item.amount,
+          date: new Date(item.date),
+          expenseSummaryId: summary.expenseSummaryId,
+        };
+      });
+    }
+
     await model.createMany({
-      data: jsonData,
-      skipDuplicates: true, // prevents errors if unique constraints exist
+      data: dataToInsert,
+      skipDuplicates: true,
     });
 
     console.log(
-      `Seeded ${modelName} with ${jsonData.length} records from ${fileName}`,
+      `Seeded ${modelName} with ${dataToInsert.length} records from ${path.basename(
+        filePath
+      )}`
     );
   } catch (err) {
-    console.error(`Failed to seed ${modelName} from ${fileName}:`, err);
+    console.error(`Failed to seed ${modelName} from ${filePath}:`, err);
   }
 }
 
@@ -78,8 +105,12 @@ async function main() {
 
   // 2️⃣ Seed tables
   for (const fileName of orderedFileNames) {
+    const modelName = path.basename(fileName, path.extname(fileName))
+      .charAt(0)
+      .toUpperCase() + path.basename(fileName, path.extname(fileName)).slice(1);
+
     const filePath = path.join(dataDirectory, fileName);
-    await seedModelFromFile(filePath);
+    await seedModelFromFile(filePath, modelName);
   }
 }
 
