@@ -8,32 +8,32 @@ datasource db {
 }
 
 model ExpenseByCategory {
-  expenseByCategoryId String         @id
+  expenseByCategoryId String         @id @default(uuid())
   expenseSummaryId    String
   category            String
-  amount              BigInt
+  amount              Decimal        @db.Decimal(15, 2)
   date                DateTime
   ExpenseSummary      ExpenseSummary @relation(fields: [expenseSummaryId], references: [expenseSummaryId])
 }
 
 model ExpenseSummary {
-  expenseSummaryId  String              @id
-  totalExpenses     Float
+  expenseSummaryId  String              @id @default(uuid())
+  totalExpenses     Decimal             @db.Decimal(15, 2)
   date              DateTime
   ExpenseByCategory ExpenseByCategory[]
 }
 
 model Expenses {
-  expenseId String   @id
+  expenseId String   @id @default(uuid())
   category  String
-  amount    Float
+  amount    Decimal  @db.Decimal(15, 2)
   timestamp DateTime
 }
 
 model Products {
-  productId     String      @id
+  productId     String      @id @default(uuid())
   name          String
-  price         Float
+  price         Decimal     @db.Decimal(15, 2)
   rating        Float?
   stockQuantity Int
   Purchases     Purchases[]
@@ -41,41 +41,41 @@ model Products {
 }
 
 model PurchaseSummary {
-  purchaseSummaryId String   @id
-  totalPurchased    Float
+  purchaseSummaryId String   @id @default(uuid())
+  totalPurchased    Decimal  @db.Decimal(15, 2)
   changePercentage  Float?
   date              DateTime
 }
 
 model Purchases {
-  purchaseId String   @id
+  purchaseId String   @id @default(uuid())
   productId  String
   timestamp  DateTime
   quantity   Int
-  unitCost   Float
-  totalCost  Float
+  unitCost   Decimal  @db.Decimal(15, 2)
+  totalCost  Decimal  @db.Decimal(15, 2)
   Products   Products @relation(fields: [productId], references: [productId])
 }
 
 model Sales {
-  saleId      String   @id
+  saleId      String   @id @default(uuid())
   productId   String
   timestamp   DateTime
   quantity    Int
-  unitPrice   Float
-  totalAmount Float
+  unitPrice   Decimal  @db.Decimal(15, 2)
+  totalAmount Decimal  @db.Decimal(15, 2)
   Products    Products @relation(fields: [productId], references: [productId])
 }
 
 model SalesSummary {
-  salesSummaryId   String   @id
-  totalValue       Float
+  salesSummaryId   String   @id @default(uuid())
+  totalValue       Decimal  @db.Decimal(15, 2)
   changePercentage Float?
   date             DateTime
 }
 
 model Users {
-  userId String @id
+  userId String @id @default(uuid())
   name   String
   email  String
 }
