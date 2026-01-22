@@ -55,7 +55,7 @@ async function seedModelFromFile(filePath: string) {
 }
 
 async function main() {
-  const dataDirectory = path.join(__dirname, "seedData");
+  const dataDirectory = path.resolve(__dirname, "seedData");
 
   const orderedFileNames = [
     "products.json",
