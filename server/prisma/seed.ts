@@ -73,8 +73,8 @@ async function main() {
 
   console.log("Looking for seed files in:", dataDirectory);
 
-  // 1️⃣ Clear all tables (commented out due to RDS permissions)
-  // await deleteAllData(orderedFileNames);
+  // 1️⃣ Clear all tables
+  await deleteAllData(orderedFileNames);
 
   // 2️⃣ Seed tables
   for (const fileName of orderedFileNames) {
